@@ -107,4 +107,6 @@ project-directory/
 - College Name - **[Nutan Institutes (NMVPM) ,Pune]** 
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License with Restricted Distribution - see the [LICENSE](LICENSE) file for details. Please note that the Software may only be shared with IBM Skillbuild Hackathon Judges, Mentors, or other authorized personnel as designated by the Cirrus Creators team. Unauthorized distribution or sharing of the Software outside the permitted parties is strictly prohibited and will result in legal action.
+
+For inquiries regarding the permitted usage and distribution of this Software, please contact the Cirrus Creators team at [gogetterstef@gmail.com].
