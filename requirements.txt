@@ -1,4 +1,4 @@
-# Specifying the Python version used for the project
+# Specify the Python version used for the project
 python==3.19.21
 
 # Flask web framework
@@ -13,14 +13,20 @@ ibm-cloud-sdk-core==3.22.1
 # OpenCV library for computer vision
 opencv-python==4.10.0
 
-# Cvzone library - version not available, included without specific version
-cvzone
+# MediaPipe library for machine learning
+mediapipe==0.10.20
+
+# PyAutoGUI library for GUI automation
+pyautogui==0.9.54
 
 # TensorFlow library for machine learning
 tensorflow==2.15.0
 
 # NumPy library for numerical computations
 numpy==1.26.4
+
+# Cvzone library - version not available, included without specific version
+cvzone
 
 # Note: The following packages are part of the Python standard library and do not have specific versions:
 # OS, Logging, Math, Threading, Webbrowser
