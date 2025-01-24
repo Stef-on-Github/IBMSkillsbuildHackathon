@@ -1,0 +1,10 @@
+*.h5 filter=lfs diff=lfs merge=lfs -text
+
+# Ignore virtual environment
+.env
+__pycache__/
+*.pyc
+
+# Ignore temporary files
+*.tmp
+*.log

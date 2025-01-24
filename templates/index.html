@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Language Detector with IBM Watson</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/png" href="static/favicon.png">
+</head>
+<body>
+    <header>
+        <h1>Sign Language Detection & Accessibility Tools</h1>
+    </header>
+    <main class="container">
+        <section class="left-side">
+            <div class="card text-to-speech">
+                <h2>Text to Speech</h2>
+                <textarea id="text-input" placeholder="Enter text here..."></textarea>
+                <button onclick="convertTextToSpeech()" aria-label="Convert text to speech">
+                    Convert to Speech
+                </button>
+                <audio id="audio-output" controls style="display: none;"></audio>
+            </div>
+            
+            <div class="card speech-to-text">
+                <h2>Speech to Text</h2>
+                <form id="speechForm" enctype="multipart/form-data">
+                    <div class="file-input-wrapper">
+                        <label for="audioFile" class="custom-file-upload" aria-label="Upload audio file">Upload Audio File</label>
+                        <input type="file" id="audioFile" name="audio" accept=".mp3, .wav" required>
+                    </div>
+                    <button type="submit">Transcribe</button>
+                </form>
+                <div id="recordButton" class="button-container">
+                    <button onclick="startRecording()" aria-label="Start real-time recording">Start Real-Time Recording</button>
+                </div>
+                <div id="result"></div>
+            </div>
+        </section>
+        <section class="right-side">
+            <div class="card">
+                <h2>Sign Language Detector</h2>
+                <div id="video-container">
+                    <img id="video" src="{{ url_for('video_feed') }}" alt="Video feed">
+                </div>
+                <textarea id="text-box" readonly></textarea><br>
+                <div class="buttons-row">
+                    <button onclick="catchText()" aria-label="Catch Text">Catch Text (C)</button>
+                    <button onclick="addSpace()" aria-label="Add Space">Space (Spacebar)</button>
+                    <button onclick="speak()" aria-label="Convert text to speech">Convert to Speech (S)</button>
+                    <button onclick="deleteLastChar()" aria-label="Backspace">Backspace</button>
+                </div>
+                <div class="model-select-row">
+                    <label for="model-select">Select Model:</label>
+                    <select id="model-select" onchange="switchModel()" aria-label="Select model">
+                        <option value="gesture">Gesture Recognition Model</option>
+                        <option value="alphabet">Alphabet Model</option>
+                        <option value="number">Number Gesture Model</option>
+                    </select>
+                </div>
+                <button onclick="navigateToOtherPage()" aria-label="Navigate to another page">
+                    Go to Another Page
+                </button>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <div class="dark-mode-toggle">
+            <label>
+                <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()">
+                Enable Dark Mode
+            </label>
+        </div>
+        <p>&copy; 2025 Team Cirrus Creators. All rights reserved.</p>
+    </footer>
+    <script>
+        // IBM Watson Functions
+        async function convertTextToSpeech() {
+            const text = document.getElementById('text-input').value;
+            const audioElement = document.getElementById('audio-output');
+            if (!text) {
+                alert('Please enter some text.');
+                return;
+            }
+            try {
+                const response = await fetch('/synthesize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text }),
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(`Error: ${error.error}`);
+                    return;
+                }
+                const audioBlob = await response.blob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                audioElement.src = audioUrl;
+                audioElement.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while processing your request.');
+            }
+        }
+        document.getElementById('audioFile').addEventListener('change', function() {
+            document.getElementById('file-text').value = this.files[0].name;
+        });
+        document.getElementById('speechForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const formData = new FormData();
+            formData.append('audio', document.getElementById('audioFile').files[0]);
+            try {
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+                if (data.transcription) {
+                    document.getElementById('result').innerHTML = `<h3>Transcription:</h3><p>${data.transcription}</p>`;
+                } else {
+                    document.getElementById('result').innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `<p style="color: red;">Error: ${error}</p>`;
+            }
+        });
+        let recognition;
+        function startRecording() {
+            const recordButton = document.getElementById('recordButton');
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('Your browser does not support the Web Speech API. Please use a compatible browser like Google Chrome.');
+                return;
+            }
+            if (!recognition) {
+                recognition = new webkitSpeechRecognition();
+                recognition.continuous = false; // Stop after one result
+                recognition.interimResults = false; // Do not show interim results
+                recognition.onstart = () => {
+                    console.log('Voice recognition started.');
+                    recordButton.classList.add('recording');
+                };
+                recognition.onresult = async (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    try {
+                        const response = await fetch('/transcribe-realtime', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ audio: transcript }),
+                        });
+                        const data = await response.json();
+                        if (data.transcription) {
+                            document.getElementById('result').innerHTML = `<h3>Real-Time Transcription:</h3><p>${data.transcription}</p>`;
+                        } else {
+                            document.getElementById('result').innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        document.getElementById('result').innerHTML = `<p style="color: red;">Error: ${error}</p>`;
+                    }
+                    stopRecording();
+                };
+                recognition.onerror = (event) => {
+                    console.error('Voice recognition error:', event.error);
+                    stopRecording();
+                };
+                recognition.onend = () => {
+                    console.log('Voice recognition ended.');
+                    stopRecording();
+                };
+            }
+            recognition.start();
+        }
+        function stopRecording() {
+            const recordButton = document.getElementById('recordButton');
+            if (recognition && recognition.start) {
+                recognition.stop();
+            }
+            recordButton.classList.remove('recording');
+        }
+        // Sign Language Detector Functions
+        const textBox = document.getElementById('text-box');
+        let detectedLetter = '';
+        const eventSource = new EventSource("/get_letter");
+        eventSource.onmessage = function(event) {
+            detectedLetter = event.data;
+            console.log(`Detected letter: ${detectedLetter}`);
+        };
+        function catchText() {
+            if (detectedLetter && detectedLetter !== '') {
+                textBox.value += detectedLetter;
+                detectedLetter = '';
+            }
+        }
+        function addSpace() {
+            textBox.value += ' ';
+        }
+        function speak() {
+            const text = textBox.value;
+            const speech = new SpeechSynthesisUtterance(text);
+            speechSynthesis.speak(speech);
+        }
+        function deleteLastChar() {
+            textBox.value = textBox.value.slice(0, -1);
+        }
+        document.addEventListener('keydown', function(event) {
+            console.log(`Key pressed: ${event.key}`);
+            if (event.key === 'c' || event.key === 'C') {
+                console.log('Caught text');
+                catchText();
+            } else if (event.key === ' ') {
+                console.log('Added space');
+                addSpace();
+            } else if (event.key === 's' || event.key === 'S') {
+                console.log('Spoke text');
+                speak();
+            } else if (event.key === 'Backspace') {
+                console.log('Deleted last character');
+                deleteLastChar();
+            }
+        });
+        document.body.focus();
+        function switchModel() {
+            const selectedModel = document.getElementById('model-select').value;
+            fetch('/set_model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `model=${selectedModel}`
+            }).then(response => {
+                if (!response.ok) {
+                    console.error('Failed to switch model:', response.statusText);
+                } else {
+                    console.log(`Switched to ${selectedModel} model`);
+                }
+            }).catch(error => {
+                console.error('Error switching model:', error);
+            });
+        }
+        function navigateToOtherPage() {
+            window.location.href = 'another_page.html';
+        }
+
+    </script>
+</body>
+</html>

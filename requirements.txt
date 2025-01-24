@@ -1,0 +1,26 @@
+# Specifying the Python version used for the project
+python==3.19.21
+
+# Flask web framework
+Flask==3.0.3
+
+# IBM Watson Text to Speech library
+ibm-watson==9.0.0
+
+# IBM Cloud SDK Core library
+ibm-cloud-sdk-core==3.22.1
+
+# OpenCV library for computer vision
+opencv-python==4.10.0
+
+# Cvzone library - version not available, included without specific version
+cvzone
+
+# TensorFlow library for machine learning
+tensorflow==2.15.0
+
+# NumPy library for numerical computations
+numpy==1.26.4
+
+# Note: The following packages are part of the Python standard library and do not have specific versions:
+# OS, Logging, Math, Threading, Webbrowser
